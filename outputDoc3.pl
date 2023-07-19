@@ -92,7 +92,19 @@ while (my $newline = <$handleFile1>) {
     $wireHash{$temp[0]} = $temp[1];
   }
 
-  elsif ($command =~ /dti_55g_10t_inv/) {
+
+  ############################################################################################
+  my @temp = $command =~ /\.\w+\((\S+)\)/gi; # Format of @temp = ('a' ,'b', 'c', 'z').
+  my $keyHash = @temp[$#temp];               #get last element (output) as key of hash.
+  pop(@temp);                                #remove last element (as remove output).
+  # if the element is wire, replace it to be inputs format.
+  for $i (0 .. $#temp + 1) {
+    if ( exists ( $wireHash{$i} ) ) {
+      $temp[i] = $wireHash{$i};
+    }
+  }
+
+  if ($command =~ /dti_55g_10t_inv/) {
     my @temp = $command =~ /\.\w+\((\S+)\)/gi; # Format of @temp = ('laddr_adj_0[2]' ,'n1')
 
     if ( exists( $outputHash{$temp[1]} ) ) {
@@ -159,7 +171,7 @@ close($handleFile1) || die "Can't close file $ARGV[0]: $!\n";
 ############################# Define Subroutine ###########################
 sub inv_operator {
   my ($input) = @_;
-  return "(~ $input)";
+  return "(~ @$input)";
 }
 
 sub and_operator {

@@ -71,7 +71,7 @@ while (my $newline = <$handleFile1>) {
   elsif ($command =~ /output/i) {
     my @temp = $command =~ /\b(\w+)\b/g; # Format of @temp = ('output', 9, 0, 'padd');
 
-    for my $i ($temp[2] .. ($temp[1] + 1) ) {
+    for my $i ($temp[2] .. $temp[1] ) {
       my $keyHash = "$temp[3]\[$i\]";
       $outputHash{$keyHash} = undef;
     }
@@ -91,35 +91,30 @@ while (my $newline = <$handleFile1>) {
     my @temp = $command =~ /\s*assign\s+(\S+)\s*=\s*(\S+);/g;  # Format of @temp = ['laddr_adj_0[5]', 'laddr[5]']
     $wireHash{$temp[0]} = $temp[1];
   }
-
+  # print Dumper(\%wireHash);
 
   ############################################################################################
   my @temp = $command =~ /\.\w+\((\S+)\)/gi; # Format of @temp = ('a' ,'b', 'c', 'z').
-  my $keyHash = @temp[$#temp];               #get last element (output) as key of hash.
+  my $keyHash = $temp[$#temp];               #get last element (output) as key of hash.
   pop(@temp);                                #remove last element (as remove output).
   # if the element is wire, replace it to be inputs format.
-  for $i (0 .. $#temp + 1) {
+  for my $i (0 .. $#temp ) {
     if ( exists ( $wireHash{$i} ) ) {
-      $temp[i] = $wireHash{$i};
+      $temp[$i] = $wireHash{$i};
     }
   }
 
   if ($command =~ /dti_55g_10t_inv/) {
-    my @temp = $command =~ /\.\w+\((\S+)\)/gi; # Format of @temp = ('laddr_adj_0[2]' ,'n1')
-
-    if ( exists( $outputHash{$temp[1]} ) ) {
-      $outputHash{$temp[1]} = inv_operator( $wireHash{$temp[0]} );
+    if ( exists( $outputHash{$keyHash} ) ) {
+      $outputHash{$keyHash} = inv_operator(\@temp);
     }
     else {
-      $wireHash{$temp[1]} = inv_operator( $wireHash{$temp[0]} );
+      $wireHash{$keyHash} = inv_operator(\@temp);
     }
+    # print "$outputHash{$keyHash}\n";
   }
 
   elsif ($command =~ /dti_55g_10t_and/) {
-    my @temp = $command =~ /\.\w+\((\S+)\)/gi; # Format of @temp = ('a' ,'b', 'c', 'z').
-    my $keyHash = @temp[$#temp];               #get last element (as output of and() ).
-    pop(@temp);                                #remove last element (as remove output).
-    
     if ( exists( $outputHash{$keyHash} ) ) {
       $outputHash{$keyHash} = and_operator(\@temp);
     }
@@ -129,16 +124,6 @@ while (my $newline = <$handleFile1>) {
   } 
 
   elsif ($command =~ /dti_55g_10t_or/) {
-    my @temp = $command =~ /\.\w+\((\S+)\)/gi; # Format of @temp = ('a' ,'b', 'c', 'z').
-    my $keyHash = @temp[$#temp];               #get last element (as output of and() ).
-    pop(@temp);                                #remove last element (as remove output).
-    # if the element is wire, replace it to be inputs format.
-    for $i (0 .. $#temp + 1) {
-      if ( exists ( $wireHash{$i} ) ) {
-        $temp[i] = $wireHash{$i};
-      }
-    }
-
     if ( exists( $outputHash{$keyHash} ) ) {
       $outputHash{$keyHash} = or_operator(\@temp);
     }
@@ -148,10 +133,6 @@ while (my $newline = <$handleFile1>) {
   }
 
   elsif ($command =~ /dti_55g_10t_xor/) {
-    my @temp = $command =~ /\.\w+\((\S+)\)/gi; # Format of @temp = ('a' ,'b', 'c', 'z').
-    my $keyHash = @temp[$#temp];               #get last element (as output of and() ).
-    pop(@temp);                                #remove last element (as remove output).
-    
     if ( exists( $outputHash{$keyHash} ) ) {
       $outputHash{$keyHash} = xor_operator(\@temp);
     }
@@ -163,7 +144,7 @@ while (my $newline = <$handleFile1>) {
 }
 
 
-print Dumper(\%wireHash);
+
 # print Dumper(\%outputHash);
 # Close the files.
 close($handleFile1) || die "Can't close file $ARGV[0]: $!\n";
@@ -212,3 +193,5 @@ sub xor_operator {
   $result .= ")";
   return $result;
 }
+
+#Hôm qua đang kiểm tra tại sao vẫn chưa thay đổi wire thành dạng bao gồm các đầu vào
